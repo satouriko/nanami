@@ -33,10 +33,13 @@ func serveTelegram(botVersion string, apiKey string)  {
 		case "Haruka":
 			if m.IsCommand() {
 				log.Infof("Chat ID: %d", m.Chat.ID)
-				t := haruka.HandleCommand(m.Command(), m.CommandArguments())
+				t := haruka.HandleCommand(m.Command(), m.CommandArguments(), m.From.ID)
 				replyMessage(t, bot, m)
 			} else {
-				continue
+				log.Infof("Chat ID: %d", m.Chat.ID)
+				if r, t := haruka.HandleText(m.Text, m.From.ID); r {
+					replyMessage(t, bot, m)
+				}
 			}
 		case "Hoshino":
 			if m.IsCommand() {
@@ -45,8 +48,6 @@ func serveTelegram(botVersion string, apiKey string)  {
 				replyMessage(t, bot, m)
 			} else {
 				log.Infof("Chat ID: %d", m.Chat.ID)
-				t := hoshino.HandleText(m.Text)
-				replyMessage(t, bot, m)
 			}
 		}
 	}

@@ -29,6 +29,21 @@ func Set(section string, key string, value interface{})  {
 	}
 }
 
+func List(section string, values *[]string) {
+	l, err := redis.Int(c.Do("LLEN", section))
+	*values, err = redis.Strings(c.Do("LRANGE", section, 0, l))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
+func Push(section string, value string) {
+	if _, err := c.Do("LPUSH", section, value); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func ScanStruct(src []interface{}, dest interface{}) error {
 	err := redis.ScanStruct(src, dest)
 	return err

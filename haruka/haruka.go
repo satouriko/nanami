@@ -5,11 +5,12 @@ import (
 	"strings"
 	db "github.com/hudson6666/nanami/database"
 	"github.com/hudson6666/nanami/config"
+	"fmt"
 )
 
-const subVersion  = "1"
+const subVersion = "2"
 
-func HandleCommand(cmd string, cmdArgs string, from int) (res string)  {
+func HandleCommand(cmd string, cmdArgs string, from int) (res string) {
 	switch cmd {
 	case "version":
 		res = "Nanami Haruka/Milestone 1 ver" + config.Version + "." + subVersion + "." + config.Build
@@ -17,8 +18,10 @@ func HandleCommand(cmd string, cmdArgs string, from int) (res string)  {
 		res = "ななみ·はるか/マイルストーン１ ver" + config.Version + "." + subVersion + "." + config.Build
 	case "版本":
 		res = "七海春歌/初代 ver" + config.Version + "." + subVersion + "." + config.Build
+	case "memo":
+		res = handleMemo(cmdArgs)
 	default:
-		if ret, msg := HandleText(cmd + " " + cmdArgs, from); ret {
+		if ret, msg := HandleText(cmd+" "+cmdArgs, from); ret {
 			res = msg
 		} else {
 			res = "没有这个命令にゃー，你可以猜猜都有什么命令(○'ω'○)丿"
@@ -62,6 +65,37 @@ func meetPerson(text string, from int) (res bool, msg string, person Person) {
 	}
 	if res {
 		db.Set("person", strconv.Itoa(from), person)
+	}
+	return
+}
+
+func handleMemo(cmd string) (res string) {
+	cmd = strings.Replace(cmd, "@nanami_nanabot", "", -1)
+	ls := strings.Fields(cmd)
+	if len(ls) == 0 {
+		ls = append(ls, "")
+	}
+	switch ls[0] {
+	case "add":
+		if len(ls) == 1 {
+			res = "没有要 memo 的内容呀"
+			return
+		} else {
+			db.Push("memo", ls[1])
+		}
+	case "tag":
+		res = "tag"
+	case "edit":
+		res = "edit"
+	case "del":
+		res = "del"
+	case "arch":
+		res = "arch"
+	}
+	var memos []string
+	db.List("memo", &memos)
+	for k, v := range memos {
+		res += fmt.Sprintf("%v: %v\n", k, v)
 	}
 	return
 }

@@ -4,16 +4,19 @@ import (
 	"strconv"
 	"strings"
 	db "github.com/hudson6666/nanami/database"
+	"github.com/hudson6666/nanami/config"
 )
+
+const subVersion  = "1"
 
 func HandleCommand(cmd string, cmdArgs string, from int) (res string)  {
 	switch cmd {
 	case "version":
-		res = "Nanami Haruka/Milestone 1 ver1.1.2"
+		res = "Nanami Haruka/Milestone 1 ver" + config.Version + "." + subVersion + "." + config.Build
 	case "バージョン":
-		res = "ななみ·はるか/マイルストーン１ ver1.1.2"
+		res = "ななみ·はるか/マイルストーン１ ver" + config.Version + "." + subVersion + "." + config.Build
 	case "版本":
-		res = "七海春歌/初代 ver1.1.2"
+		res = "七海春歌/初代 ver" + config.Version + "." + subVersion + "." + config.Build
 	default:
 		if ret, msg := HandleText(cmd + " " + cmdArgs, from); ret {
 			res = msg

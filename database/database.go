@@ -1,9 +1,8 @@
 package database
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
-	"fmt"
-	"log"
 )
 
 var c redis.Conn
@@ -11,7 +10,7 @@ var c redis.Conn
 func Init() (err error) {
 	c, err = redis.Dial("tcp", "127.0.0.1:6379")
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 	return
 }

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/hudson6666/nanami/handler"
 	"time"
 	"github.com/hudson6666/nanami/database"
+	"github.com/hudson6666/nanami/handler"
 )
 
 func main() {

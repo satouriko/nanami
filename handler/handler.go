@@ -1,11 +1,12 @@
 package handler
 
 import (
-	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/hudson6666/nanami/haruka"
-	"time"
-	log "github.com/Sirupsen/logrus"
 	"github.com/hudson6666/nanami/hoshino"
+	"time"
+	"strings"
+	log "github.com/Sirupsen/logrus"
+	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 func Init()  {
@@ -31,7 +32,7 @@ func serveTelegram(botVersion string, apiKey string)  {
 
 		switch botVersion {
 		case "Haruka":
-			if m.IsCommand() {
+			if m.IsCommand() && strings.Contains(m.Text, "@nanami_nanabot") {
 				log.Infof("Chat ID: %d", m.Chat.ID)
 				t := haruka.HandleCommand(m.Command(), m.CommandArguments(), m.From.ID)
 				replyMessage(t, bot, m)
@@ -42,7 +43,7 @@ func serveTelegram(botVersion string, apiKey string)  {
 				}
 			}
 		case "Hoshino":
-			if m.IsCommand() {
+			if m.IsCommand() && strings.Contains(m.Text, "@nanami_alphabot") {
 				log.Infof("Chat ID: %d", m.Chat.ID)
 				t := hoshino.HandleCommand(m.Command(), m.CommandArguments())
 				replyMessage(t, bot, m)

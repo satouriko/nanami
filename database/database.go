@@ -15,11 +15,12 @@ func Init() (err error) {
 	return
 }
 
-func Get(section string, key string) (values []interface{})  {
-	values, err := redis.Values(c.Do("HGETALL", section + "-" + key))
+func Get(section string, key string, values interface{})  {
+	v, err := redis.Values(c.Do("HGETALL", section + "-" + key))
 	if err != nil {
 		log.Fatal(err)
 	}
+	scanStruct(v, values)
 	return
 }
 
@@ -29,22 +30,39 @@ func Set(section string, key string, value interface{})  {
 	}
 }
 
-func List(section string, values *[]string) {
+func List(section string, key string, values interface{}) {
 	l, err := redis.Int(c.Do("LLEN", section))
-	*values, err = redis.Strings(c.Do("LRANGE", section, 0, l))
+	v, err := redis.Values(c.Do("LRANGE", section + "-" + key, 0, l))
+	redis.ScanSlice(v, values)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return
 }
 
-func Push(section string, value string) {
-	if _, err := c.Do("LPUSH", section, value); err != nil {
+func Push(section string, key string, value string) {
+	if _, err := c.Do("LPUSH", section + "-" + key, value); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func ScanStruct(src []interface{}, dest interface{}) error {
+func scanStruct(src []interface{}, dest interface{}) error {
 	err := redis.ScanStruct(src, dest)
 	return err
+}
+
+func SetIncr(section string) (value int)  {
+	value, err := redis.Int(c.Do("INCR", section))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
+func GetIncr(section string) (value int) {
+	value, err := redis.Int(c.Do("GET", section))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
 }

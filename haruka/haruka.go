@@ -10,7 +10,7 @@ import (
 
 const subVersion = "2"
 
-func HandleCommand(cmd string, cmdArgs string, from int) (res string) {
+func HandleCommand(cmd string, cmdArgs string, from int, chat int64) (res string) {
 	switch cmd {
 	case "version":
 		res = "Nanami Haruka/Milestone 1 ver" + config.Version + "." + subVersion + "." + config.Build
@@ -19,7 +19,7 @@ func HandleCommand(cmd string, cmdArgs string, from int) (res string) {
 	case "版本":
 		res = "七海春歌/初代 ver" + config.Version + "." + subVersion + "." + config.Build
 	case "memo":
-		res = handleMemo(cmdArgs)
+		res = handleMemo(cmdArgs, chat)
 	default:
 		if ret, msg := HandleText(cmd+" "+cmdArgs, from); ret {
 			res = msg
@@ -39,6 +39,7 @@ func HandleText(text string, from int) (res bool, msg string) {
 		person.Familiarity++
 		msg = "你在叫我嘛，可我不知道你在说什么哦"
 		res = true
+		db.Set("person", strconv.Itoa(from), person)
 		return
 	}
 	res = false
@@ -46,7 +47,7 @@ func HandleText(text string, from int) (res bool, msg string) {
 }
 
 func meetPerson(text string, from int) (res bool, msg string, person Person) {
-	db.ScanStruct(db.Get("person", strconv.Itoa(from)), &person)
+	db.Get("person", strconv.Itoa(from), &person)
 	switch person.Status {
 	case "name":
 		person.Name = text
@@ -69,7 +70,7 @@ func meetPerson(text string, from int) (res bool, msg string, person Person) {
 	return
 }
 
-func handleMemo(cmd string) (res string) {
+func handleMemo(cmd string, chat int64) (res string) {
 	cmd = strings.Replace(cmd, "@nanami_nanabot", "", -1)
 	ls := strings.Fields(cmd)
 	if len(ls) == 0 {
@@ -81,7 +82,16 @@ func handleMemo(cmd string) (res string) {
 			res = "没有要 memo 的内容呀"
 			return
 		} else {
-			db.Push("memo", ls[1])
+			var t string
+			for k, v := range ls {
+				if k >= 1 {
+					t += v
+					t += " "
+				}
+			}
+			db.Push("memo", strconv.FormatInt(chat, 10), strconv.Itoa(db.SetIncr("memo-incr")))
+			var md MemoDetail = MemoDetail{Content:t, Tags:""}
+			db.Set("memo-detail", strconv.Itoa(db.GetIncr("memo-incr")), md)
 		}
 	case "tag":
 		res = "tag"
@@ -92,10 +102,17 @@ func handleMemo(cmd string) (res string) {
 	case "arch":
 		res = "arch"
 	}
-	var memos []string
-	db.List("memo", &memos)
+	var memos Memo
+	db.List("memo", strconv.FormatInt(chat, 10), &memos)
 	for k, v := range memos {
-		res += fmt.Sprintf("%v: %v\n", k, v)
+		var md MemoDetail
+		db.Get("memo-detail", v, &md)
+		res += fmt.Sprintf("%v: %v", k, md.Content)
+		if md.Tags != "" {
+			res += fmt.Sprintf(" [%v]\n", md.Tags)
+		} else {
+			res += fmt.Sprintf("\n")
+		}
 	}
 	return
 }

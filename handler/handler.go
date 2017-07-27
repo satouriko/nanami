@@ -34,7 +34,7 @@ func serveTelegram(botVersion string, apiKey string)  {
 		case "Haruka":
 			if m.IsCommand() && strings.Contains(m.Text, "@nanami_nanabot") {
 				log.Infof("Chat ID: %d", m.Chat.ID)
-				t := haruka.HandleCommand(m.Command(), m.CommandArguments(), m.From.ID)
+				t := haruka.HandleCommand(m.Command(), m.CommandArguments(), m.From.ID, m.Chat.ID)
 				replyMessage(t, bot, m)
 			} else {
 				log.Infof("Chat ID: %d", m.Chat.ID)

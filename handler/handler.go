@@ -32,7 +32,7 @@ func serveTelegram(botVersion string, apiKey string)  {
 
 		switch botVersion {
 		case "Haruka":
-			if m.IsCommand() && strings.Contains(m.Text, "@nanami_nanabot") {
+			if m.IsCommand() && (m.Chat.IsPrivate() || strings.Contains(m.Text, "@nanami_nanabot")) {
 				log.Infof("Chat ID: %d", m.Chat.ID)
 				t := haruka.HandleCommand(m.Command(), m.CommandArguments(), m.From.ID, m.Chat.ID)
 				replyMessage(t, bot, m)
@@ -43,7 +43,7 @@ func serveTelegram(botVersion string, apiKey string)  {
 				}
 			}
 		case "Hoshino":
-			if m.IsCommand() && strings.Contains(m.Text, "@nanami_alphabot") {
+			if m.IsCommand() && (m.Chat.IsPrivate() || strings.Contains(m.Text, "@nanami_alphabot")) {
 				log.Infof("Chat ID: %d", m.Chat.ID)
 				t := hoshino.HandleCommand(m.Command(), m.CommandArguments())
 				replyMessage(t, bot, m)

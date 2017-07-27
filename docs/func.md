@@ -49,6 +49,9 @@
 <td>Update a memo</td>
 </tr>
 <tr>
+<th colspan=2>Below is not so useful so currently we dont have</th>
+</tr>
+<tr>
 <td>/memo mv [index] [before-index]</td>
 <td>Set the order of a memo</td>
 </tr>

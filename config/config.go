@@ -1,4 +1,4 @@
 package config
 
 const Version  = "1"
-const Build  = "7"
+const Build  = "8"

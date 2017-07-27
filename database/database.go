@@ -53,6 +53,12 @@ func Count(section string, key string) (value int)  {
 	return
 }
 
+func Remove(section string, key string, value string)  {
+	if _, err := c.Do("SREM", section + "-" + key, value); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func scanStruct(src []interface{}, dest interface{}) error {
 	err := redis.ScanStruct(src, dest)
 	return err
@@ -60,14 +66,6 @@ func scanStruct(src []interface{}, dest interface{}) error {
 
 func SetIncr(section string) (value int)  {
 	value, err := redis.Int(c.Do("INCR", section))
-	if err != nil {
-		log.Fatal(err)
-	}
-	return
-}
-
-func GetIncr(section string) (value int) {
-	value, err := redis.Int(c.Do("GET", section))
 	if err != nil {
 		log.Fatal(err)
 	}

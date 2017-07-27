@@ -77,6 +77,7 @@ func handleMemo(cmd string, chat int64) (res string) {
 		ls = append(ls, "")
 	}
 	tagFlag := false
+	archFlag := false
 	switch ls[0] {
 	case "add":
 		if len(ls) == 1 {
@@ -90,9 +91,10 @@ func handleMemo(cmd string, chat int64) (res string) {
 					t += " "
 				}
 			}
-			db.Push("memo", strconv.FormatInt(chat, 10), strconv.Itoa(db.SetIncr("memo-incr")))
+			id := db.SetIncr("memo-incr")
+			db.Push("memo", strconv.FormatInt(chat, 10), strconv.Itoa(id))
 			var md MemoDetail = MemoDetail{Content:t}
-			db.Set("memo-detail", strconv.Itoa(db.GetIncr("memo-incr")), md)
+			db.Set("memo-detail", strconv.Itoa(id), md)
 		}
 	case "tag":
 		if len(ls) <= 2 {
@@ -111,17 +113,78 @@ func handleMemo(cmd string, chat int64) (res string) {
 			db.Push("tags", memos[i], t)
 			db.Push("tag", t + "@" + strconv.FormatInt(chat, 10), memos[i])
 		}
-	case "edit":
-		res = "edit"
-	case "del":
-		res = "del"
+	case "rmtag":
+		if len(ls) <= 2 {
+			res = "没有要移除的 tag 呀"
+			return
+		} else {
+			i, _ := strconv.Atoi(ls[1])
+			t := ls[2]
+			var memos Memo
+			db.List("memo", strconv.FormatInt(chat, 10), &memos)
+			i = len(memos) - 1 - i
+			if i < 0 || i >= len(memos) {
+				res = "没有这个索引诶"
+				return
+			}
+			db.Remove("tags", memos[i], t)
+			db.Remove("tag", t + "@" + strconv.FormatInt(chat, 10), memos[i])
+		}
+	case "append":
+		if len(ls) <= 2 {
+			res = "没有要追加的内容呀"
+			return
+		} else {
+			i, _ := strconv.Atoi(ls[1])
+			var memos Memo
+			db.List("memo", strconv.FormatInt(chat, 10), &memos)
+			i = len(memos) - 1 - i
+			if i < 0 || i >= len(memos) {
+				res = "没有这个索引诶"
+				return
+			}
+			var t string
+			for k, v := range ls {
+				if k >= 2 {
+					t += v
+					t += " "
+				}
+			}
+			var md MemoDetail
+			db.Get("memo-detail", memos[i], &md)
+			md.Content += t
+			db.Set("memo-detail", memos[i], md)
+		}
 	case "arch":
-		res = "arch"
+		if len(ls) <= 1 {
+			archFlag = true
+		} else {
+			i, _ := strconv.Atoi(ls[1])
+			var memos Memo
+			db.List("memo", strconv.FormatInt(chat, 10), &memos)
+			i = len(memos) - 1 - i
+			if i < 0 || i >= len(memos) {
+				res = "没有这个索引诶"
+				return
+			}
+			db.Push("memo-arch", strconv.FormatInt(chat, 10), memos[i])
+			db.Remove("memo", strconv.FormatInt(chat, 10), memos[i])
+			var tgs Tags
+			db.List("tags", memos[i], &tgs)
+			for _, t := range tgs {
+				db.Remove("tag", t + "@" + strconv.FormatInt(chat, 10), memos[i])
+				db.Push("tag-arch", t + "@" + strconv.FormatInt(chat, 10), memos[i])
+			}
+		}
+	case "":
+		// No tag
 	default:
 		tagFlag = true
 	}
 	var memos Memo
-	if tagFlag {
+	if archFlag {
+		db.List("memo-arch", strconv.FormatInt(chat, 10), &memos)
+	} else if tagFlag {
 		db.List("tag", ls[0] + "@" + strconv.FormatInt(chat, 10), &memos)
 	} else {
 		db.List("memo", strconv.FormatInt(chat, 10), &memos)
@@ -130,7 +193,11 @@ func handleMemo(cmd string, chat int64) (res string) {
 		k, v := len(memos) - 1 - r, memos[r];
 		var md MemoDetail
 		db.Get("memo-detail", v, &md)
-		res += fmt.Sprintf("%v: %v", k, md.Content)
+		if tagFlag {
+			res += fmt.Sprintf("(%v): %v", k, md.Content)
+		} else {
+			res += fmt.Sprintf("%v): %v", k, md.Content)
+		}
 		if c := db.Count("tags", v); c != 0 {
 			res += " ["
 			var tgs Tags

@@ -31,8 +31,7 @@ func Set(section string, key string, value interface{})  {
 }
 
 func List(section string, key string, values interface{}) {
-	l, err := redis.Int(c.Do("LLEN", section))
-	v, err := redis.Values(c.Do("LRANGE", section + "-" + key, 0, l))
+	v, err := redis.Values(c.Do("SMEMBERS", section + "-" + key))
 	redis.ScanSlice(v, values)
 	if err != nil {
 		log.Fatal(err)
@@ -41,9 +40,17 @@ func List(section string, key string, values interface{}) {
 }
 
 func Push(section string, key string, value string) {
-	if _, err := c.Do("LPUSH", section + "-" + key, value); err != nil {
+	if _, err := c.Do("SADD", section + "-" + key, value); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func Count(section string, key string) (value int)  {
+	value, err := redis.Int(c.Do("SCARD", section + "-" + key))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
 }
 
 func scanStruct(src []interface{}, dest interface{}) error {

@@ -20,6 +20,8 @@ func HandleCommand(cmd string, cmdArgs string, from int, chat int64) (res string
 		res = "七海春歌/初代 ver" + config.Version + "." + subVersion + "." + config.Build
 	case "memo":
 		res = handleMemo(cmdArgs, chat)
+	case "help":
+		res = "https://github.com/hudson6666/nanami/blob/master/docs/func.md"
 	default:
 		if ret, msg := HandleText(cmd+" "+cmdArgs, from); ret {
 			res = msg
@@ -92,7 +94,7 @@ func handleMemo(cmd string, chat int64) (res string) {
 				}
 			}
 			id := db.SetIncr("memo-incr")
-			db.Push("memo", strconv.FormatInt(chat, 10), strconv.Itoa(id))
+			db.Push("memo", strconv.FormatInt(chat, 10), strconv.Itoa(id), id)
 			var md MemoDetail = MemoDetail{Content:t}
 			db.Set("memo-detail", strconv.Itoa(id), md)
 		}
@@ -110,8 +112,8 @@ func handleMemo(cmd string, chat int64) (res string) {
 				res = "没有这个索引诶"
 				return
 			}
-			db.Push("tags", memos[i], t)
-			db.Push("tag", t + "@" + strconv.FormatInt(chat, 10), memos[i])
+			db.Push("tags", memos[i], t, db.GetIncr("memo-incr"))
+			db.Push("tag", t + "@" + strconv.FormatInt(chat, 10), memos[i], db.GetIncr("memo-incr"))
 		}
 	case "rmtag":
 		if len(ls) <= 2 {
@@ -167,13 +169,13 @@ func handleMemo(cmd string, chat int64) (res string) {
 				res = "没有这个索引诶"
 				return
 			}
-			db.Push("memo-arch", strconv.FormatInt(chat, 10), memos[i])
+			db.Push("memo-arch", strconv.FormatInt(chat, 10), memos[i], db.GetIncr("memo-incr"))
 			db.Remove("memo", strconv.FormatInt(chat, 10), memos[i])
 			var tgs Tags
 			db.List("tags", memos[i], &tgs)
 			for _, t := range tgs {
 				db.Remove("tag", t + "@" + strconv.FormatInt(chat, 10), memos[i])
-				db.Push("tag-arch", t + "@" + strconv.FormatInt(chat, 10), memos[i])
+				db.Push("tag-arch", t + "@" + strconv.FormatInt(chat, 10), memos[i], db.GetIncr("memo-incr"))
 			}
 		}
 	case "":
